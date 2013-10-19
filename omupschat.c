@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <usb.h>
+#if defined(__linux__)
+#include <bsd/stdio.h>
+#endif
 
 #define TARGET_VENDOR_ID	0x0590	/* OMRON */
 #define TARGET_PRODUCT_ID	0x0080	/* BY35S */

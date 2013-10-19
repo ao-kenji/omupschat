@@ -8,6 +8,9 @@
 #include <errno.h>
 #include <stdio.h>
 #include <usb.h>
+#if defined(__linux__)
+#include <string.h>
+#endif
 
 #define COMMAND_IPPON
 /* #define COMMAND_CYPRESS */
