@@ -1,0 +1,20 @@
+# Makefile for Linux (Ubuntu, GNU make)
+#
+# You must add the following packages:
+#   - libusb-dev
+#   - libbsd-dev
+
+PROG = omupschat
+SRCS = omupschat.c omron_command.c
+OBJS = omupschat.o omron_command.o
+LIBS = -lbsd -lusb
+
+CC = gcc
+
+all: ${PROG}
+
+${PROG}: ${OBJS}
+	${CC} -o ${PROG} ${OBJS} ${LIBS}
+
+clean:
+	rm -f ${PROG} ${OBJS}
