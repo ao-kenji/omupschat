@@ -51,11 +51,27 @@ main()
 		return 1;
 	}
 
+#if defined(__linux__)
+	if ((ret = usb_claim_interface(udev, 0)) < 0) {
+		/* Re-try after detaching kernel driver */ 
+		if ((ret = usb_detach_kernel_driver_np(udev, 0)) < 0) {
+			printf("Can not detach kernel driver, ret = %d\n", ret);
+			usb_close(udev);
+			return 1;
+		}
+		if ((ret = usb_claim_interface(udev, 0)) < 0) {
+			printf("Can not claim USB device, ret = %d\n", ret);
+			usb_close(udev);
+			return 1;
+		}
+	}
+#else
 	if ((ret = usb_claim_interface(udev, 0)) < 0) {
 		printf("Can not claim USB device, ret = %d\n", ret);
 		usb_close(udev);
 		return 1;
 	}
+#endif
 
 	if ((ret = usb_set_altinterface(udev, 0)) < 0) {
 		printf("Can not set alt-interface, ret = %d\n", ret);
