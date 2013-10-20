@@ -25,8 +25,8 @@ int omron_command(const char *, char *, size_t);
 int
 omron_command(const char *cmd, char *buf, size_t buflen)
 {
-	char	tmp[64];
-	int	ret;
+	char	tmp[64], tmp2[64];
+	int	ret, len1;
 	size_t	i;
 
 	snprintf(tmp, sizeof(tmp), "%s", cmd);
@@ -34,13 +34,8 @@ omron_command(const char *cmd, char *buf, size_t buflen)
 	for (i = 0; i < strlen(tmp); i += ret) {
 
 		/* Write data in 8-byte chunks */
-#if 0 /* original */
-		ret = usb_control_msg(udev, USB_ENDPOINT_OUT + USB_TYPE_CLASS + USB_RECIP_INTERFACE,
-			0x09, 0x2, 0, &tmp[i], 8, 1000);
-#else
 		ret = usb_control_msg(udev, USB_ENDPOINT_OUT + USB_TYPE_CLASS + USB_RECIP_INTERFACE,
 			0x09, 0x200, 0, &tmp[i], 8, 1000);
-#endif
 		if (ret <= 0) {
 			fprintf(stderr, "send: %s", (ret != -ETIMEDOUT) ? usb_strerror() : "Connection timed out");
 			return ret;
@@ -62,10 +57,36 @@ omron_command(const char *cmd, char *buf, size_t buflen)
 	}
 
 	snprintf(buf, buflen, "%.*s", ret, tmp);
+	len1 = ret;
 
-	printf("read:[%.*s]\n", (int)strcspn(buf, "\r"), buf);
+	printf("read1:[%.*s]\n", (int)strcspn(buf, "\r"), buf);
 
-	return ret;
+	/*
+	 * XXX: On OpenBSD, it seems that we can not get whole data at once.
+	 * So we wait a while (1 sec here), and read the rest.
+	 */
+
+	sleep(1);
+
+	/* Read all 64 bytes of the reply in one large chunk, second time */
+	ret = usb_interrupt_read(udev, 0x81, tmp2, sizeof(tmp2), 1000);
+
+	/*
+	 * Any errors here mean that we are unable to read a reply (which
+	 * will happen after successfully writing a command to the UPS)
+	 */
+	if (ret <= 0) {
+		fprintf(stderr, "read2: %s", (ret != -ETIMEDOUT) ? usb_strerror() : "Connection timed out");
+		return ret;
+	}
+
+	snprintf(&buf[len1], buflen - len1, "%.*s", ret, tmp2);
+
+	printf("read2:[%.*s]\n", (int)strcspn(&buf[len1], "\r"), &buf[len1]);
+
+	printf("buf:[%.*s]\n", (int)strcspn(buf, "\r"), buf);
+
+	return len1 + ret;
 }
 
 #endif /* of ippon */
