@@ -7,10 +7,8 @@
 
 #include <errno.h>
 #include <stdio.h>
-#include <usb.h>
-#if defined(__linux__)
 #include <string.h>
-#endif
+#include <usb.h>
 
 #define COMMAND_IPPON
 /* #define COMMAND_CYPRESS */
@@ -49,7 +47,7 @@ omron_command(const char *cmd, char *buf, size_t buflen)
 		}
 	}
 
-	printf("send: %.*s", (int)strcspn(tmp, "\r"), tmp);
+	printf("send:[%.*s]\n", (int)strcspn(tmp, "\r"), tmp);
 
 	/* Read all 64 bytes of the reply in one large chunk */
 	ret = usb_interrupt_read(udev, 0x81, tmp, sizeof(tmp), 1000);
@@ -59,13 +57,13 @@ omron_command(const char *cmd, char *buf, size_t buflen)
 	 * will happen after successfully writing a command to the UPS)
 	 */
 	if (ret <= 0) {
-		printf("read: %s", (ret != -ETIMEDOUT) ? usb_strerror() : "Connection timed out");
+		fprintf(stderr, "read: %s", (ret != -ETIMEDOUT) ? usb_strerror() : "Connection timed out");
 		return ret;
 	}
 
 	snprintf(buf, buflen, "%.*s", ret, tmp);
 
-	printf("read: %.*s", (int)strcspn(buf, "\r"), buf);
+	printf("read:[%.*s]\n", (int)strcspn(buf, "\r"), buf);
 
 	return ret;
 }
@@ -101,7 +99,7 @@ omron_command(const char *cmd, char *buf, size_t buflen)
 		}
 	}
 
-	printf("send: %.*s", (int)strcspn(tmp, "\r"), tmp);
+	printf("send:[%.*s]\n", (int)strcspn(tmp, "\r"), tmp);
 
 	memset(buf, 0, buflen);
 
@@ -121,7 +119,7 @@ omron_command(const char *cmd, char *buf, size_t buflen)
 		}
 	}
 
-	printf("read: %.*s", (int)strcspn(buf, "\r"), buf);
+	printf("read:[%.*s]\n", (int)strcspn(buf, "\r"), buf);
 	return i;
 }
 #endif /* of cypress */
